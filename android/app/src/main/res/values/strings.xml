@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AETHER MIND</string>
+    <string name="app_subtitle">v0.9 · No cloud · No API · Local AI</string>
+    <string name="input_hint">Talk to Aether…</string>
+    <string name="send_desc">Send message</string>
+    <string name="status_dot_desc">Status indicator</string>
+    <string name="status_online">ONLINE</string>
+    <string name="status_thinking">THINKING…</string>
+    <string name="status_offline">OFFLINE</string>
+</resources>

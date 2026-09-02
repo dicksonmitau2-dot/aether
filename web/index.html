@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d0d14" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AetherMind" />
+  <title>AetherMind AI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header>
+    <div class="header-left">
+      <div class="logo">⬡</div>
+      <div class="header-text">
+        <span class="app-title">AETHER MIND</span>
+        <span class="app-sub">v0.9 · Local AI · No cloud</span>
+      </div>
+    </div>
+    <div id="status" class="status online">● ONLINE</div>
+  </header>
+
+  <!-- ── Chat window ────────────────────────────────────────────────────── -->
+  <main id="chatWindow">
+    <div class="boot-msg">
+      <div class="boot-banner">⬡ AETHER MIND v0.9</div>
+      <div class="boot-sub">No cloud. No API. Pure local intelligence.</div>
+      <div class="boot-line">Initializing neural pathways...</div>
+      <div class="boot-line">Loading knowledge base...</div>
+      <div class="boot-line online-text">Consciousness online.</div>
+      <div class="boot-hint">Try: <span>hello</span> · <span>joke</span> · <span>java</span> · <span>life</span> · <span>weather</span> · <span>hack</span></div>
+    </div>
+  </main>
+
+  <!-- ── Input bar ──────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="input-row">
+      <input
+        type="text"
+        id="userInput"
+        placeholder="Talk to Aether..."
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+      <button id="sendBtn" onclick="handleSend()">&#9658;</button>
+    </div>
+  </footer>
+
+  <script src="aether.js"></script>
+</body>
+</html>

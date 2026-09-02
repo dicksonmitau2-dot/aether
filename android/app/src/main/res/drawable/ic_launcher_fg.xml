@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Hexagon shape for AetherMind logo -->
+    <path
+        android:fillColor="#00E6FF"
+        android:pathData="M54,10 L90,30 L90,70 L54,90 L18,70 L18,30 Z" />
+    <path
+        android:fillColor="#0D0D14"
+        android:pathData="M54,22 L80,36 L80,64 L54,78 L28,64 L28,36 Z" />
+    <path
+        android:fillColor="#00E6FF"
+        android:pathData="M44,40 L64,40 L64,44 L44,44 Z" />
+    <path
+        android:fillColor="#00E6FF"
+        android:pathData="M40,50 L68,50 L68,54 L40,54 Z" />
+    <path
+        android:fillColor="#00E6FF"
+        android:pathData="M44,60 L64,60 L64,64 L44,64 Z" />
+</vector>

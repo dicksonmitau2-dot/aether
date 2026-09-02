@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AetherMind" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">@color/cyan</item>
+        <item name="colorPrimaryVariant">@color/bg_dark</item>
+        <item name="colorOnPrimary">@color/bg_dark</item>
+
+        <!-- Secondary -->
+        <item name="colorSecondary">@color/green</item>
+        <item name="colorOnSecondary">@color/bg_dark</item>
+
+        <!-- Background -->
+        <item name="android:colorBackground">@color/bg_dark</item>
+        <item name="colorSurface">@color/bg_panel</item>
+        <item name="colorOnSurface">@color/white</item>
+
+        <!-- Status bar and navigation bar -->
+        <item name="android:statusBarColor">@color/bg_panel</item>
+        <item name="android:navigationBarColor">@color/bg_panel</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+
+        <!-- Text -->
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/gray</item>
+
+        <!-- EditText cursor -->
+        <item name="colorControlActivated">@color/cyan</item>
+        <item name="colorControlHighlight">#3300E6FF</item>
+    </style>
+</resources>
