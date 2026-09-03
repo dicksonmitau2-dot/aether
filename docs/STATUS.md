@@ -25,7 +25,7 @@ The keyword engine is now **one file** (`shared/knowledge.json`), **whole-word**
 - Knowledge: `shared/knowledge.json` copied to `web/knowledge.json` by the run script
 - Session: `exit` / `quit` only (not `bye`)
 - History: `localStorage` key `aethermind.session.v1`
-- Verified here: Python 3.13 present; matching tests via `python3 test_match.py`
+- Verified here: Python 3.13 present; `python3 test_match.py` 11/11; HTTP 200 for `/web/`, `/web/aether.js`, `/web/knowledge.json`
 
 ---
 
