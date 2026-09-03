@@ -21,6 +21,7 @@
 
     <!-- Input -->
     <color name="input_border">#FF2A2A45</color>
+    <color name="border">#FF1E1E32</color>
 
     <!-- System / Material -->
     <color name="colorPrimary">#FF00E6FF</color>

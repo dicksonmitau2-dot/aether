@@ -27,6 +27,18 @@
 
         <!-- EditText cursor -->
         <item name="colorControlActivated">@color/cyan</item>
-        <item name="colorControlHighlight">#3300E6FF</item>
+        <item name="colorControlHighlight">@color/bg_input</item>
+
+        <item name="android:windowBackground">@color/bg_dark</item>
+        <item name="elevationOverlayEnabled">false</item>
+    </style>
+
+    <style name="Widget.AetherMind.SendButton" parent="Widget.Material3.Button.IconButton.Filled">
+        <item name="backgroundTint">@color/cyan</item>
+        <item name="elevation">0dp</item>
+        <item name="hoveredElevation">0dp</item>
+        <item name="pressedElevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="rippleColor">@color/bg_input</item>
     </style>
 </resources>

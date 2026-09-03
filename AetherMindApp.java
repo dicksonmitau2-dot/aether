@@ -1,5 +1,6 @@
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -48,7 +49,10 @@ public class AetherMindApp extends JFrame {
         // ── Header ────────────────────────────────────────────────────────────
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(BG_PANEL);
-        header.setBorder(new EmptyBorder(12, 20, 12, 20));
+        header.setBorder(new CompoundBorder(
+            new MatteBorder(0, 0, 1, 0, new Color(30, 30, 50)),
+            new EmptyBorder(12, 20, 12, 20)
+        ));
 
         JLabel title = new JLabel("⬡  AETHER MIND");
         title.setFont(new Font("Consolas", Font.BOLD, 22));
@@ -95,6 +99,10 @@ public class AetherMindApp extends JFrame {
         ));
 
         sendButton = new JButton("SEND  ▶");
+        sendButton.setUI(new BasicButtonUI());
+        sendButton.setOpaque(true);
+        sendButton.setContentAreaFilled(true);
+        sendButton.setBorderPainted(false);
         sendButton.setBackground(CYAN);
         sendButton.setForeground(BG_DARK);
         sendButton.setFont(new Font("Consolas", Font.BOLD, 13));
@@ -121,6 +129,7 @@ public class AetherMindApp extends JFrame {
 
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setBackground(BG_PANEL);
+        bottom.setBorder(new MatteBorder(1, 0, 0, 0, new Color(30, 30, 50)));
         bottom.add(inputRow, BorderLayout.CENTER);
         bottom.add(hint,     BorderLayout.SOUTH);
 
