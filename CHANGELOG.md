@@ -2,6 +2,17 @@
 
 All notable changes to AetherMind are listed here. Version numbers follow the UI badge (`v0.9`, …).
 
+## [Unreleased]
+
+Usability pass on top of v0.9.
+
+- Single knowledge map: `shared/knowledge.json` on Desktop, Android, and Web
+- Whole-word matching, longest key first (`this` no longer matches `hi`)
+- Chat history restored on relaunch on all three surfaces
+- Typewriter replies on Android; `exit`/`quit` only for hard stop
+- Portable `./build.sh`, `./run-web.sh`, `./run-desktop.sh`
+- Docs: [docs/HOW_TO_RUN.md](docs/HOW_TO_RUN.md), [docs/STATUS.md](docs/STATUS.md)
+
 ## [0.9] — 2026-09
 
 Initial snapshot across three local surfaces.

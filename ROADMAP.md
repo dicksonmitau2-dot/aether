@@ -8,10 +8,10 @@ This document tracks the planned evolution of AetherMind across all three platfo
 
 The goal of v1.0 is to close the gaps between platforms, harden the build process, and ship a clean, consistent 1.0 across all three targets.
 
-- [ ] **Sync knowledge bases** — Desktop, Android, and Web have diverged slightly. Establish a single source-of-truth knowledge map shared (or mirrored) across all platforms
-- [ ] **Fix `build.bat` portability** — Replace the hardcoded IntelliJ JBR path with `JAVA_HOME` or a PATH lookup so the Desktop build works on any machine
+- [x] **Sync knowledge bases** — `shared/knowledge.json` is loaded by Desktop, Android, and Web
+- [x] **Fix `build.bat` portability** — `build.sh` / `build.bat` use `PATH` or `JAVA_HOME` (no IntelliJ JBR path)
 - [ ] **Web PWA completion** — Add `manifest.json` and a Service Worker so the web app is a proper installable PWA with offline caching
-- [ ] **Persistent chat history** — Optionally save and restore the conversation on relaunch (local file on Desktop, SharedPreferences/Room on Android, localStorage on Web)
+- [x] **Persistent chat history** — `~/.aethermind/` on Desktop, SharedPreferences on Android, localStorage on Web
 - [ ] **Cross-platform version badge** — Centralize the version string so bumping `0.9 → 1.0` in one place propagates everywhere
 
 ---
@@ -68,10 +68,10 @@ Larger architectural changes that move AetherMind beyond pure keyword matching w
 
 Tasks that apply continuously across all milestones.
 
-- [ ] **Unit tests** — Add test coverage for `AetherBrain` (Android/Kotlin), the `think()` function (Desktop/Java), and `aether.js` (Web/Jest or similar)
+- [ ] **Unit tests** — `test_match.py` covers the shared map; still missing in-language tests for Java/Kotlin/JS brains
 - [ ] **CI pipeline** — GitHub Actions workflow to build the Android APK and run tests on every push
 - [x] **Changelog** — `CHANGELOG.md` exists; keep it updated when versioning
-- [ ] **Linux / macOS Desktop support** — Run steps are in `docs/DEVELOPMENT.md`; still needs a portable `build.sh` and a macOS smoke test
+- [ ] **Linux / macOS Desktop support** — `./build.sh` is portable; still needs a JDK on this machine and a macOS smoke test
 - [ ] **Issue tracker hygiene** — Label issues with `platform:android`, `platform:web`, `platform:desktop`, `ai-engine`, `ui`, `bug`
 
 ---

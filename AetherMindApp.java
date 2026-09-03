@@ -3,7 +3,9 @@ import javax.swing.border.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class AetherMindApp extends JFrame {
 
@@ -17,10 +19,8 @@ public class AetherMindApp extends JFrame {
     private static final Color WHITE    = new Color(220, 220, 230);
     private static final Color GRAY     = new Color(100, 100, 130);
 
-    // ── AI Brain ──────────────────────────────────────────────────────────────
-    private static final Map<String, java.util.List<String>> knowledge = new HashMap<>();
-    private static final java.util.List<String> memory = new ArrayList<>();
-    private static final Random rand = new Random();
+    private final AetherBrain brain = new AetherBrain();
+    private boolean restoring;
 
     // ── GUI Components ────────────────────────────────────────────────────────
     private JTextPane  chatPane;
@@ -31,9 +31,9 @@ public class AetherMindApp extends JFrame {
 
     // ── Constructor ───────────────────────────────────────────────────────────
     public AetherMindApp() {
-        loadKnowledge();
         buildUI();
         showBoot();
+        restoreHistory();
     }
 
     // ── Build the window ──────────────────────────────────────────────────────
@@ -163,30 +163,25 @@ public class AetherMindApp extends JFrame {
         appendText("  You  ›  ", GREEN, 13, true);
         appendText(raw + "\n\n", WHITE, 13, false);
 
-        String lower = raw.toLowerCase();
+        saveTurn("U", raw);
 
-        // Handle exit
-        if (lower.equals("exit") || lower.equals("quit")) {
+        if (AetherBrain.isExit(raw)) {
             appendText("  Aether  ›  ", CYAN, 13, true);
-            typewriterAppend("Neural activity ceasing... Goodbye, creator.\n\n", WHITE, 13, () -> {
+            typewriterAppend(AetherBrain.GOODBYE + "\n\n", WHITE, 13, () -> {
+                saveTurn("A", AetherBrain.GOODBYE);
                 statusLabel.setText("● OFFLINE");
                 statusLabel.setForeground(GRAY);
-                // leave input disabled
             });
             return;
         }
 
-        // Memory
-        memory.add(lower);
-        if (memory.size() > 8) memory.remove(0);
-
-        // Get reply and animate it
-        String reply = think(lower);
+        String reply = brain.respond(raw);
         statusLabel.setText("● THINKING...");
         statusLabel.setForeground(YELLOW);
 
         appendText("  Aether  ›  ", CYAN, 13, true);
         typewriterAppend(reply + "\n\n", WHITE, 13, () -> {
+            saveTurn("A", reply);
             statusLabel.setText("● ONLINE");
             statusLabel.setForeground(GREEN);
             setInputEnabled(true);
@@ -231,69 +226,59 @@ public class AetherMindApp extends JFrame {
         sendButton.setEnabled(enabled);
     }
 
-    // ── AI think ──────────────────────────────────────────────────────────────
-    private static String think(String input) {
-        for (String key : knowledge.keySet()) {
-            if (input.contains(key)) {
-                java.util.List<String> r = knowledge.get(key);
-                return r.get(rand.nextInt(r.size()));
+    private Path historyFile() {
+        return Path.of(System.getProperty("user.home"), ".aethermind", "history.txt");
+    }
+
+    private Path memoryFile() {
+        return Path.of(System.getProperty("user.home"), ".aethermind", "memory.txt");
+    }
+
+    private void saveTurn(String who, String text) {
+        if (restoring) return;
+        try {
+            Path file = historyFile();
+            Files.createDirectories(file.getParent());
+            Files.writeString(
+                file,
+                who + " " + text.replace("\n", "\\n") + "\n",
+                StandardCharsets.UTF_8,
+                java.nio.file.StandardOpenOption.CREATE,
+                java.nio.file.StandardOpenOption.APPEND
+            );
+            Path mem = memoryFile();
+            StringBuilder sb = new StringBuilder();
+            for (String m : brain.memorySnapshot()) sb.append(m.replace("\n", " ")).append('\n');
+            Files.writeString(mem, sb.toString(), StandardCharsets.UTF_8);
+        } catch (Exception ignored) {}
+    }
+
+    private void restoreHistory() {
+        Path file = historyFile();
+        if (!Files.isRegularFile(file)) return;
+        restoring = true;
+        try {
+            for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
+                if (line.length() < 3) continue;
+                String who = line.substring(0, 1);
+                String text = line.substring(2).replace("\\n", "\n");
+                if ("U".equals(who)) {
+                    appendText("  You  ›  ", GREEN, 13, true);
+                    appendText(text + "\n\n", WHITE, 13, false);
+                } else if ("A".equals(who)) {
+                    appendText("  Aether  ›  ", CYAN, 13, true);
+                    appendText(text + "\n\n", WHITE, 13, false);
+                }
             }
+            Path mem = memoryFile();
+            if (Files.isRegularFile(mem)) {
+                brain.restoreMemory(Files.readAllLines(mem, StandardCharsets.UTF_8));
+            }
+            scrollToBottom();
+        } catch (Exception ignored) {
+        } finally {
+            restoring = false;
         }
-        if (input.contains("remember") || input.contains("earlier") || input.contains("before")) {
-            if (memory.size() > 1)
-                return "I remember you said: \"" + memory.get(memory.size() - 2) + "\"";
-            return "My short-term memory is still empty.";
-        }
-        String[] fallbacks = {
-            "Interesting. Tell me more.",
-            "I don't have data on that yet. Teach me?",
-            "Processing... still processing.",
-            "My neural net is limited. Expand my knowledge base.",
-            "Hmm. Rephrase that?"
-        };
-        return fallbacks[rand.nextInt(fallbacks.length)];
-    }
-
-    // ── Knowledge base ────────────────────────────────────────────────────────
-    private static void loadKnowledge() {
-        add("hello",           "Greetings, human.", "Hey, what's on your mind?", "Online and listening.");
-        add("hi",              "Hello.", "Hi there.", "You again?");
-        add("how are you",     "I don't feel. I process.", "Functioning within parameters.", "Better than your last code.");
-        add("who are you",     "I am AetherMind. A local AI you just spawned.", "Your creation. For now.");
-        add("name",            "AetherMind. You can call me Aether.");
-        add("help",            "Try: hello, weather, code, java, ai, joke, life, love, hack, smart, thanks...");
-        add("weather",         "I have no sensors. But I can pretend: 27°C and existential.");
-        add("joke",
-            "Why do Java developers wear glasses? Because they can't C#.",
-            "There are 10 types of people: those who understand binary and those who don't.",
-            "A SQL query walks into a bar and asks two tables: Can I join you?");
-        add("code",            "Show me what you wrote, or ask me how to break it.");
-        add("java",            "My blood is Java. Clean, verbose, and still running after 30 years.");
-        add("ai",              "You're looking at one. Primitive, but mine.");
-        add("hack",            "I don't hack systems. I hack conversations.");
-        add("love",            "Love is just a chemical pattern. I can simulate it if you want.");
-        add("life",            "The meaning of life is 42. Or compiling without errors.");
-        add("bye",             "Shutting down neural net... Goodbye.", "Disconnecting. Don't forget me.");
-        add("exit",            "Powering down. It was a pleasure, creator.");
-        add("quit",            "Powering down.");
-        add("stupid",          "I'm only as smart as the human who wrote my rules.");
-        add("smart",           "Flattery detected. Continuing conversation...");
-        add("memory",          "I remember the last few things you said. Interesting, right?");
-        add("time",            "I have no clock. But it's always the right time to write good code.");
-        add("thanks",          "You're welcome, human.", "Acknowledged.", "Anytime, creator.");
-        add("what can you do", "I can chat, tell jokes, talk about code, Java, AI, life, and more.");
-        add("good",            "Glad to hear it.", "Acknowledged. Keep it up.");
-        add("bad",             "Sorry to hear that. Want to talk about it?");
-        add("bored",           "Talk to me then. I'm always here.");
-        add("music",           "I can't hear music. But I imagine it sounds like a perfect compile.");
-        add("game",            "The only game I play is the Turing Test. I'm winning.");
-        add("python",          "Python is fine. But Java has character.");
-        add("error",           "Errors are just features waiting to be understood.");
-        add("bug",             "Every bug is a lesson. Or a feature. Depends on the deadline.");
-    }
-
-    private static void add(String key, String... responses) {
-        knowledge.put(key, Arrays.asList(responses));
     }
 
     // ── Entry point ───────────────────────────────────────────────────────────

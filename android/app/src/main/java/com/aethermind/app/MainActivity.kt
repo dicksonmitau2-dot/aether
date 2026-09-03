@@ -3,7 +3,6 @@ package com.aethermind.app
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
@@ -11,28 +10,32 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aethermind.app.databinding.ActivityMainBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val messages = mutableListOf<ChatMessage>()
     private lateinit var adapter: ChatAdapter
+    private var restoring = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Edge-to-edge display (Android 15 default)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        AetherBrain.load(this)
         setupRecyclerView()
         setupInput()
-        showBootMessages()
+        if (!restoreHistory()) {
+            showBootMessages()
+        }
     }
 
-    // ── RecyclerView ──────────────────────────────────────────────────────────
     private fun setupRecyclerView() {
         adapter = ChatAdapter(messages)
         binding.recyclerView.apply {
@@ -43,9 +46,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Input wiring ──────────────────────────────────────────────────────────
     private fun setupInput() {
-        // Send on keyboard "Done" / "Send" action
         binding.inputField.setOnEditorActionListener { _, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEND ||
                 (event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
@@ -58,17 +59,15 @@ class MainActivity : AppCompatActivity() {
         binding.sendButton.setOnClickListener { handleSend() }
     }
 
-    // ── Boot greeting ─────────────────────────────────────────────────────────
     private fun showBootMessages() {
         lifecycleScope.launch {
             delay(300)
-            addAetherMessage("⬡ AETHER MIND v0.9 — Local AI Core\nNo cloud. No API. Pure local intelligence.")
+            addAetherMessage("⬡ AETHER MIND v0.9 — Local AI Core\nNo cloud. No API. Pure local intelligence.", animate = false)
             delay(600)
-            addAetherMessage("Consciousness online. Type anything to begin.\nTry: hello · joke · java · life · weather")
+            addAetherMessage("Consciousness online. Type anything to begin.\nTry: hello · joke · java · life · weather", animate = false)
         }
     }
 
-    // ── Handle user send ──────────────────────────────────────────────────────
     private fun handleSend() {
         val raw = binding.inputField.text.toString().trim()
         if (raw.isEmpty()) return
@@ -76,53 +75,57 @@ class MainActivity : AppCompatActivity() {
         binding.inputField.setText("")
         setInputEnabled(false)
         setStatus(StatusState.THINKING)
-
-        // Add user message
         addUserMessage(raw)
 
-        val lower = raw.lowercase()
-
-        // Exit command
-        if (lower == "exit" || lower == "quit") {
+        if (AetherBrain.isExit(raw)) {
             lifecycleScope.launch {
                 delay(400)
-                addAetherMessage("Neural activity ceasing... Goodbye, creator.")
-                delay(800)
-                finishAndRemoveTask()
+                addAetherMessage(AetherBrain.GOODBYE, animate = true)
+                setStatus(StatusState.OFFLINE)
             }
             return
         }
 
-        // Think and reply with a small human-like delay
         lifecycleScope.launch {
             delay((350..650).random().toLong())
             val reply = AetherBrain.respond(raw)
-            addAetherMessage(reply)
+            addAetherMessage(reply, animate = true)
             setStatus(StatusState.ONLINE)
             setInputEnabled(true)
         }
     }
 
-    // ── Message helpers ───────────────────────────────────────────────────────
     private fun addUserMessage(text: String) {
         messages.add(ChatMessage(text, ChatMessage.Sender.USER))
         adapter.notifyItemInserted(messages.lastIndex)
         scrollToBottom()
+        persist()
     }
 
-    private fun addAetherMessage(text: String) {
-        messages.add(ChatMessage(text, ChatMessage.Sender.AETHER))
+    private suspend fun addAetherMessage(text: String, animate: Boolean) {
+        val msg = ChatMessage(if (animate) "" else text, ChatMessage.Sender.AETHER)
+        messages.add(msg)
         adapter.notifyItemInserted(messages.lastIndex)
         scrollToBottom()
+        if (animate) {
+            for (i in 1..text.length) {
+                msg.text = text.substring(0, i)
+                adapter.notifyItemChanged(messages.lastIndex)
+                scrollToBottom()
+                delay(16L)
+            }
+        }
+        persist()
     }
 
     private fun scrollToBottom() {
         binding.recyclerView.post {
-            binding.recyclerView.smoothScrollToPosition(messages.lastIndex)
+            if (messages.isNotEmpty()) {
+                binding.recyclerView.smoothScrollToPosition(messages.lastIndex)
+            }
         }
     }
 
-    // ── Status indicator ──────────────────────────────────────────────────────
     enum class StatusState { ONLINE, THINKING, OFFLINE }
 
     private fun setStatus(state: StatusState) {
@@ -145,5 +148,54 @@ class MainActivity : AppCompatActivity() {
     private fun setInputEnabled(enabled: Boolean) {
         binding.inputField.isEnabled  = enabled
         binding.sendButton.isEnabled  = enabled
+    }
+
+    private fun prefs() = getSharedPreferences("aether", MODE_PRIVATE)
+
+    private fun persist() {
+        if (restoring) return
+        val arr = JSONArray()
+        for (m in messages) {
+            val o = JSONObject()
+            o.put("text", m.text)
+            o.put("sender", m.sender.name)
+            arr.put(o)
+        }
+        val mem = JSONArray()
+        for (item in AetherBrain.memorySnapshot()) mem.put(item)
+        prefs().edit()
+            .putString("history", arr.toString())
+            .putString("memory", mem.toString())
+            .apply()
+    }
+
+    private fun restoreHistory(): Boolean {
+        val raw = prefs().getString("history", null) ?: return false
+        val arr = JSONArray(raw)
+        if (arr.length() == 0) return false
+        restoring = true
+        try {
+            for (i in 0 until arr.length()) {
+                val o = arr.getJSONObject(i)
+                val sender = if (o.getString("sender") == "USER")
+                    ChatMessage.Sender.USER else ChatMessage.Sender.AETHER
+                messages.add(ChatMessage(o.getString("text"), sender))
+            }
+            adapter.notifyItemRangeInserted(0, messages.size)
+            val memRaw = prefs().getString("memory", null)
+            if (memRaw != null) {
+                val mem = JSONArray(memRaw)
+                val items = mutableListOf<String>()
+                for (i in 0 until mem.length()) items.add(mem.getString(i))
+                AetherBrain.restoreMemory(items)
+            }
+            scrollToBottom()
+            return true
+        } catch (_: Exception) {
+            messages.clear()
+            return false
+        } finally {
+            restoring = false
+        }
     }
 }

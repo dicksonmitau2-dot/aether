@@ -1,81 +1,70 @@
 # Development
 
-How to run each surface from this repository. Paths below are relative to the repo root.
+User-facing start: **[HOW_TO_RUN.md](HOW_TO_RUN.md)**. Readiness: **[STATUS.md](STATUS.md)**.
 
-## Desktop (Java Swing)
+This page is the extra detail for people changing the code.
 
-**Requires:** JDK 11 or newer (`java` and `javac` on `PATH`).
-
-The Windows `build.bat` is hardcoded to an IntelliJ JBR under `C:\AetherMind` and will not work as-is on Linux, macOS, or a stock JDK. Use the JDK on your `PATH` instead:
+## Desktop
 
 ```bash
-javac AetherMindApp.java
-jar cfm AetherMind.jar MANIFEST.MF AetherMindApp.class AetherMindApp\$*.class
-java -jar AetherMind.jar
+./build.sh          # needs javac + jar (JDK, not only a JRE)
+./run-desktop.sh
 ```
 
-On Windows cmd.exe, escape inner-class globbing differently:
+`build.sh` / `build.bat` use `PATH` or `JAVA_HOME`. `uninstall.bat` still deletes `C:\AetherMind` — do not run it against this git checkout.
 
-```bat
-javac AetherMindApp.java
-jar cfm AetherMind.jar MANIFEST.MF AetherMindApp.class AetherMindApp$*.class
-java -jar AetherMind.jar
+If `./build.sh` says `javac` is missing:
+
+```bash
+sudo apt install openjdk-21-jdk    # Debian / Kali / Ubuntu
 ```
 
-`uninstall.bat` deletes `C:\AetherMind` and a Desktop shortcut. Do not run it against this git checkout.
+Compile targets Java 11 (`--release 11`). The JAR includes `knowledge.json` from `shared/`.
 
 ## Web
 
-**Requires:** any modern browser. A local HTTP server is optional but recommended (some browsers restrict `file://` behavior).
-
 ```bash
-cd web
-python3 -m http.server 8080
+./run-web.sh
+# http://127.0.0.1:8080/web/
 ```
 
-Then open `http://127.0.0.1:8080`. On another device on the same network, use this machine's LAN address instead of localhost.
-
-Windows users can run `web/StartServer.bat` if Python is installed; it still assumes the old `C:\AetherMind\web` path, so prefer the command above from the real repo location.
-
-There is no build step and no bundler. Edit `web/aether.js` / `web/style.css` and refresh.
+`aether.js` fetches `knowledge.json` next to `index.html`, then `../shared/knowledge.json`. Always run `./sync-knowledge.sh` after editing the shared map. There is no bundler.
 
 ## Android
 
-**Requires:** Android Studio (or a JDK 17 + Android SDK), min API 26, compile/target API 35.
+Open **`android/`** in Android Studio. `app/build.gradle.kts` adds `../../shared` as an assets source so `knowledge.json` is packaged automatically.
 
-This tree does **not** include the Gradle wrapper (`gradlew`). Opening `android/` in Android Studio is the supported path — Studio generates the wrapper on first sync.
+No Gradle wrapper in git. Do not commit `local.properties`, `*.jks`, or `android/app/build/`.
 
-1. Open the `android/` directory (not the repo root) in Android Studio.
-2. Let Gradle sync.
-3. Run on an API 26+ emulator or device.
+## Knowledge changes
 
-Release / APK steps: [android/HOW_TO_BUILD_APK.md](../android/HOW_TO_BUILD_APK.md).
-
-Do not commit `local.properties`, keystores (`*.jks`), or `android/app/build/`.
+1. Edit `shared/knowledge.json` only
+2. `./sync-knowledge.sh`
+3. `python3 test_match.py`
+4. Rebuild desktop JAR / Android app; refresh the web tab
 
 ## Version string
 
-`0.9` is duplicated in UI copy and Gradle. When bumping, update all of:
+`0.9` is still duplicated. When bumping, update:
 
-- `AetherMindApp.java` (window title + boot banner)
-- `web/index.html` (subtitle + boot banner)
+- `AetherMindApp.java` (title + boot)
+- `web/index.html`
 - `android/app/build.gradle.kts` (`versionName`)
-- `android/app/src/main/res/values/strings.xml` (`app_subtitle`)
+- `android/.../strings.xml` (`app_subtitle`)
 - `android/.../MainActivity.kt` (boot text)
-- `README.md`, `CHANGELOG.md`, `ROADMAP.md`
+- `shared/knowledge.json` (`version`)
+- `README.md`, `CHANGELOG.md`, `ROADMAP.md`, `docs/STATUS.md`, `docs/HOW_TO_RUN.md`
 
-## Layout of this repo
+## Layout
 
 ```
 aether/
-├── AetherMindApp.java     Desktop app (UI + brain)
-├── MANIFEST.MF            JAR Main-Class
-├── build.bat              Windows-only desktop build (hardcoded paths)
-├── uninstall.bat          Windows-only; deletes C:\AetherMind
-├── android/               Kotlin app (open this folder in Android Studio)
-├── web/                   Static HTML/JS/CSS
-├── docs/                  Architecture and contributor guides
-├── README.md
-├── ROADMAP.md
-└── CHANGELOG.md
+├── shared/knowledge.json
+├── AetherMindApp.java
+├── AetherBrain.java
+├── build.sh / run-desktop.sh / run-web.sh / sync-knowledge.sh
+├── test_match.py
+├── android/
+├── web/
+└── docs/
 ```

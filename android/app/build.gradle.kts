@@ -42,6 +42,10 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    sourceSets {
+        getByName("main").assets.srcDir(layout.projectDirectory.dir("../../shared"))
+    }
 }
 
 dependencies {

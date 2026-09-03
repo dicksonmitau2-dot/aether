@@ -30,6 +30,9 @@ android/.cxx/
 .DS_Store
 Thumbs.db
 
-# Python (web server leftovers)
+# Python
 __pycache__/
 *.pyc
+
+# Local desktop history (if someone runs from a weird cwd)
+.aethermind/
