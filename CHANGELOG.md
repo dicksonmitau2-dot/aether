@@ -1,0 +1,13 @@
+# Changelog
+
+All notable changes to AetherMind are listed here. Version numbers follow the UI badge (`v0.9`, …).
+
+## [0.9] — 2026-09
+
+Initial snapshot across three local surfaces.
+
+- Desktop Java Swing app (`AetherMindApp.java`) with typewriter replies and an 8-message memory buffer
+- Android Kotlin app (`com.aethermind.app`) targeting API 35, min API 26
+- Static web client (`web/`) with clickable boot hints and mobile viewport handling
+- Keyword brain (no model, no network) with per-platform knowledge maps
+- Dark cyan-on-black chat UI and ONLINE / THINKING / OFFLINE status

@@ -1,0 +1,35 @@
+# Java
+*.class
+*.jar
+*.war
+hs_err_pid*
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Signing — never commit
+*.jks
+*.keystore
+*.p12
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python (web server leftovers)
+__pycache__/
+*.pyc

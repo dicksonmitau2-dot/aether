@@ -70,8 +70,8 @@ Tasks that apply continuously across all milestones.
 
 - [ ] **Unit tests** — Add test coverage for `AetherBrain` (Android/Kotlin), the `think()` function (Desktop/Java), and `aether.js` (Web/Jest or similar)
 - [ ] **CI pipeline** — GitHub Actions workflow to build the Android APK and run tests on every push
-- [ ] **Changelog** — Maintain a `CHANGELOG.md` alongside this roadmap
-- [ ] **Linux / macOS Desktop support** — The Swing app is cross-platform; document and test builds outside Windows
+- [x] **Changelog** — `CHANGELOG.md` exists; keep it updated when versioning
+- [ ] **Linux / macOS Desktop support** — Run steps are in `docs/DEVELOPMENT.md`; still needs a portable `build.sh` and a macOS smoke test
 - [ ] **Issue tracker hygiene** — Label issues with `platform:android`, `platform:web`, `platform:desktop`, `ai-engine`, `ui`, `bug`
 
 ---
