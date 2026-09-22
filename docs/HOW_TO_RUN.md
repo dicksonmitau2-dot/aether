@@ -31,7 +31,7 @@ What you should see: dark chat UI, “ONLINE”, boot lines, clickable hints (`h
 | `exit` or `quit` | Goodbye, status OFFLINE, input disabled |
 | `bye` | A bye **reply**; chat stays open |
 
-Refresh the page: the conversation comes back (browser `localStorage`).
+Refresh the page: the conversation comes back. The web client uses IndexedDB for a larger local session store and falls back to `localStorage` when IndexedDB is unavailable. It keeps up to 1,000 recent user lines for quick `remember` lookups.
 
 ### Manual equivalent
 

@@ -1,6 +1,9 @@
 'use strict';
 
 const STORAGE_KEY = 'aethermind.session.v1';
+const DATABASE_NAME = 'aethermind.storage.v1';
+const DATABASE_VERSION = 1;
+const SESSION_STORE = 'sessions';
 const GOODBYE = 'Neural activity ceasing... Goodbye, creator.';
 const ONLINE_SEARCH = 'https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=1&srsearch=';
 const ONLINE_PAGE = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&piprop=thumbnail&pithumbsize=640&exintro=1&explaintext=1&redirects=1&format=json&origin=*&pageids=';
@@ -8,8 +11,9 @@ const ONLINE_PAGE = 'https://en.wikipedia.org/w/api.php?action=query&prop=extrac
 let knowledge = {};
 let fallbacks = [];
 let memory = [];
-let maxMemory = 8;
+let maxMemory = 1000;
 let ready = false;
+let storageDb = null;
 
 const chatWindow = document.getElementById('chatWindow');
 const userInput  = document.getElementById('userInput');
@@ -172,10 +176,42 @@ function localReply(input) {
     }
   }
   if (/\b(remember|earlier|before)\b/.test(lower)) {
-    if (memory.length > 1) return `I remember you said: "${memory[memory.length - 2]}"`;
+    const searchable = lower.replace(/\b(remember|earlier|before)\b/g, '').trim();
+    const previous = memory.slice(0, -1).reverse();
+    const match = searchable
+      ? previous.find(line => line.includes(searchable.split(/\s+/)[0]))
+      : previous[0];
+    if (match) return `I remember you said: "${match}"`;
     return 'My short-term memory is still empty.';
   }
   return null;
+}
+
+function openStorage() {
+  if (!('indexedDB' in window)) return Promise.resolve(null);
+  return new Promise(resolve => {
+    const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(SESSION_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+  });
+}
+
+function readStoredSession() {
+  if (!storageDb) return Promise.resolve(null);
+  return new Promise(resolve => {
+    const request = storageDb.transaction(SESSION_STORE).objectStore(SESSION_STORE).get('current');
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => resolve(null);
+  });
+}
+
+function saveStoredSession(session) {
+  if (!storageDb) return;
+  const transaction = storageDb.transaction(SESSION_STORE, 'readwrite');
+  transaction.objectStore(SESSION_STORE).put(session, 'current');
 }
 
 async function onlineReply(input) {
@@ -373,14 +409,20 @@ function persist() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows, memory }));
   } catch (_) { /* quota / private mode */ }
+  saveStoredSession({ rows, memory, savedAt: Date.now() });
 }
 
-function restoreHistory() {
+async function restoreHistory() {
+  const stored = await readStoredSession();
   let saved;
-  try {
-    saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-  } catch (_) {
-    return;
+  if (stored) {
+    saved = stored;
+  } else {
+    try {
+      saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    } catch (_) {
+      return;
+    }
   }
   if (!saved || !Array.isArray(saved.rows) || saved.rows.length === 0) return;
   for (const row of saved.rows) {
@@ -448,16 +490,17 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
 setInputEnabled(false);
 updateVoiceButton();
 loadKnowledge()
-  .then((data) => {
+  .then(async (data) => {
     fallbacks = Array.isArray(data.fallbacks) ? data.fallbacks : ['Hmm. Rephrase that?'];
-    maxMemory = Number(data.memorySize) || 8;
+    maxMemory = Number(data.memorySize) || 1000;
     knowledge = {};
     for (const t of data.topics || []) {
       if (t && t.key && Array.isArray(t.replies) && t.replies.length) {
         knowledge[String(t.key).toLowerCase()] = t.replies;
       }
     }
-    restoreHistory();
+    storageDb = await openStorage();
+    await restoreHistory();
     ready = true;
     setInputEnabled(true);
     userInput.focus();

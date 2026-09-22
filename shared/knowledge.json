@@ -1,6 +1,6 @@
 {
   "version": "0.9",
-  "memorySize": 8,
+  "memorySize": 1000,
   "fallbacks": [
     "Interesting. Tell me more.",
     "I don't have data on that yet. Teach me?",
