@@ -2,6 +2,8 @@
 
 const STORAGE_KEY = 'aethermind.session.v1';
 const GOODBYE = 'Neural activity ceasing... Goodbye, creator.';
+const ONLINE_SEARCH = 'https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=1&srsearch=';
+const ONLINE_PAGE = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&redirects=1&format=json&origin=*&pageids=';
 
 let knowledge = {};
 let fallbacks = [];
@@ -47,6 +49,39 @@ function think(input) {
     return 'My short-term memory is still empty.';
   }
   return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+}
+
+function localReply(input) {
+  const lower = input.toLowerCase();
+  const keys = Object.keys(knowledge).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (phraseMatch(lower, key)) {
+      const list = knowledge[key];
+      return list[Math.floor(Math.random() * list.length)];
+    }
+  }
+  if (/\b(remember|earlier|before)\b/.test(lower)) {
+    if (memory.length > 1) return `I remember you said: "${memory[memory.length - 2]}"`;
+    return 'My short-term memory is still empty.';
+  }
+  return null;
+}
+
+async function onlineReply(input) {
+  const search = await fetch(ONLINE_SEARCH + encodeURIComponent(input));
+  if (!search.ok) throw new Error('online search failed');
+  const searchData = await search.json();
+  const result = searchData.query && searchData.query.search && searchData.query.search[0];
+  if (!result) return null;
+
+  const page = await fetch(ONLINE_PAGE + result.pageid);
+  if (!page.ok) throw new Error('online article failed');
+  const pageData = await page.json();
+  const article = pageData.query && pageData.query.pages && pageData.query.pages[result.pageid];
+  const extract = article && article.extract ? article.extract.trim() : '';
+  if (!extract) return null;
+  const shortened = extract.length > 700 ? `${extract.slice(0, 697).trim()}...` : extract;
+  return `${shortened}\n\nSource: Wikipedia — ${result.title}`;
 }
 
 function remember(lower) {
@@ -126,7 +161,7 @@ function speak(text) {
   window.speechSynthesis.speak(utterance);
 }
 
-function handleSend() {
+async function handleSend() {
   if (!ready) return;
   const raw = userInput.value.trim();
   if (!raw) return;
@@ -146,7 +181,17 @@ function handleSend() {
     return;
   }
   setStatus('thinking');
-  const reply = think(raw);
+  const local = localReply(raw);
+  let reply = local;
+  if (!reply) {
+    setStatus('searching');
+    try {
+      reply = await onlineReply(raw);
+    } catch (_) {
+      reply = null;
+    }
+  }
+  reply = reply || fallbacks[Math.floor(Math.random() * fallbacks.length)];
 
   setTimeout(async () => {
     await appendBubble('ai', reply, true);
@@ -170,6 +215,7 @@ function setStatus(state) {
   statusEl.className = `status ${state}`;
   if (state === 'online')   { statusEl.textContent = '● ONLINE';     }
   if (state === 'thinking') { statusEl.textContent = '● THINKING...'; }
+  if (state === 'searching') { statusEl.textContent = '● SEARCHING ONLINE...'; }
   if (state === 'speaking') { statusEl.textContent = '● SPEAKING...'; }
   if (state === 'listening') { statusEl.textContent = '● LISTENING...'; }
   if (state === 'offline')  { statusEl.textContent = '● OFFLINE';    }

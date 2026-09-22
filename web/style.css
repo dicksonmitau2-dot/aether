@@ -92,6 +92,8 @@ header {
 
 .status.online   { color: var(--green); }
 .status.thinking { color: var(--yellow); }
+.status.searching { color: var(--cyan); }
+.status.speaking { color: var(--cyan); }
 .status.offline  { color: var(--gray); }
 
 /* ── Chat window ───────────────────────────────────────────────────────── */
