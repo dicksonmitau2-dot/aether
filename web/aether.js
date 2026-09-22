@@ -3,7 +3,7 @@
 const STORAGE_KEY = 'aethermind.session.v1';
 const GOODBYE = 'Neural activity ceasing... Goodbye, creator.';
 const ONLINE_SEARCH = 'https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=1&srsearch=';
-const ONLINE_PAGE = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&redirects=1&format=json&origin=*&pageids=';
+const ONLINE_PAGE = 'https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&piprop=thumbnail&pithumbsize=640&exintro=1&explaintext=1&redirects=1&format=json&origin=*&pageids=';
 
 let knowledge = {};
 let fallbacks = [];
@@ -81,7 +81,11 @@ async function onlineReply(input) {
   const extract = article && article.extract ? article.extract.trim() : '';
   if (!extract) return null;
   const shortened = extract.length > 700 ? `${extract.slice(0, 697).trim()}...` : extract;
-  return `${shortened}\n\nSource: Wikipedia — ${result.title}`;
+  return {
+    text: `${shortened}\n\nSource: Wikipedia — ${result.title}`,
+    image: article.thumbnail ? article.thumbnail.source : null,
+    title: result.title
+  };
 }
 
 function remember(lower) {
@@ -104,7 +108,7 @@ async function loadKnowledge() {
   throw lastErr || new Error('knowledge.json not found');
 }
 
-function appendBubble(who, text, animate = false) {
+function appendBubble(who, text, animate = false, imageUrl = null, imageTitle = '') {
   const row = document.createElement('div');
   row.className = `msg-row ${who}`;
 
@@ -114,6 +118,15 @@ function appendBubble(who, text, animate = false) {
 
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
+
+  if (imageUrl) {
+    const image = document.createElement('img');
+    image.className = 'answer-image';
+    image.src = imageUrl;
+    image.alt = imageTitle;
+    image.loading = 'lazy';
+    bubble.appendChild(image);
+  }
 
   row.appendChild(label);
   row.appendChild(bubble);
@@ -182,7 +195,7 @@ async function handleSend() {
   }
   setStatus('thinking');
   const local = localReply(raw);
-  let reply = local;
+  let reply = local ? { text: local, image: null, title: '' } : null;
   if (!reply) {
     setStatus('searching');
     try {
@@ -191,11 +204,11 @@ async function handleSend() {
       reply = null;
     }
   }
-  reply = reply || fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  reply = reply || { text: fallbacks[Math.floor(Math.random() * fallbacks.length)], image: null, title: '' };
 
   setTimeout(async () => {
-    await appendBubble('ai', reply, true);
-    speak(reply);
+    await appendBubble('ai', reply.text, true, reply.image, reply.title);
+    speak(reply.text);
     setInputEnabled(true);
     userInput.focus();
   }, 350 + Math.random() * 200);
