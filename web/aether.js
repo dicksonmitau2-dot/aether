@@ -33,6 +33,80 @@ function isExit(raw) {
   return s === 'exit' || s === 'quit';
 }
 
+function calculate(expression) {
+  const tokens = expression.replace(/,/g, '').match(/\d+(?:\.\d+)?|[()+\-*/%]/g);
+  if (!tokens || tokens.join('') !== expression.replace(/\s+/g, '').replace(/,/g, '')) return null;
+  let index = 0;
+
+  function parsePrimary() {
+    if (tokens[index] === '(') {
+      index++;
+      const value = parseAdditive();
+      if (tokens[index] !== ')') throw new Error('missing closing parenthesis');
+      index++;
+      return value;
+    }
+    const value = Number(tokens[index++]);
+    if (!Number.isFinite(value)) throw new Error('invalid number');
+    return value;
+  }
+
+  function parseMultiplicative() {
+    let value = parsePrimary();
+    while (['*', '/', '%'].includes(tokens[index])) {
+      const operator = tokens[index++];
+      const right = parsePrimary();
+      if (operator === '*') value *= right;
+      if (operator === '/') value /= right;
+      if (operator === '%') value %= right;
+    }
+    return value;
+  }
+
+  function parseAdditive() {
+    let value = parseMultiplicative();
+    while (['+', '-'].includes(tokens[index])) {
+      const operator = tokens[index++];
+      const right = parseMultiplicative();
+      value = operator === '+' ? value + right : value - right;
+    }
+    return value;
+  }
+
+  try {
+    const value = parseAdditive();
+    if (index !== tokens.length || !Number.isFinite(value)) return null;
+    return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(8)));
+  } catch (_) {
+    return null;
+  }
+}
+
+function logicReply(input) {
+  const normalized = input.toLowerCase().replace(/[?]/g, '').trim();
+  const expression = normalized
+    .replace(/^(what is|calculate|compute|solve)\s+/, '')
+    .replace(/\bmultiplied by\b/g, '*')
+    .replace(/\btimes\b/g, '*')
+    .replace(/\bdivided by\b/g, '/')
+    .replace(/\bplus\b/g, '+')
+    .replace(/\bminus\b/g, '-')
+    .replace(/\bmod(?:ulo)?\b/g, '%')
+    .trim();
+  if (/^[\d\s()+*/%.\-]+$/.test(expression) && /\d/.test(expression)) {
+    const answer = calculate(expression);
+    if (answer !== null) return `The answer is ${answer}.`;
+  }
+
+  if (/^(what is )?(the )?time$/.test(normalized)) {
+    return `The local time is ${new Intl.DateTimeFormat([], { timeStyle: 'short' }).format(new Date())}.`;
+  }
+  if (/^(what day is it|what is today's date|what is the date today)$/.test(normalized)) {
+    return `Today is ${new Intl.DateTimeFormat([], { dateStyle: 'full' }).format(new Date())}.`;
+  }
+  return null;
+}
+
 function think(input) {
   const lower = input.toLowerCase();
   const keys = Object.keys(knowledge).sort((a, b) => b.length - a.length);
@@ -52,6 +126,8 @@ function think(input) {
 }
 
 function localReply(input) {
+  const logic = logicReply(input);
+  if (logic) return logic;
   const lower = input.toLowerCase();
   const keys = Object.keys(knowledge).sort((a, b) => b.length - a.length);
   for (const key of keys) {
