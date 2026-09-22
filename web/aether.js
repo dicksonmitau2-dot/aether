@@ -84,6 +84,41 @@ function calculate(expression) {
 
 function logicReply(input) {
   const normalized = input.toLowerCase().replace(/[?]/g, '').trim();
+  const percent = normalized.match(/(?:what is )?(\d+(?:\.\d+)?)% (?:of|from) (\d+(?:\.\d+)?)/);
+  if (percent) {
+    const percentage = Number(percent[1]);
+    const base = Number(percent[2]);
+    return `${percentage}% of ${base} is ${Number((percentage * base / 100).toFixed(8))}.`;
+  }
+
+  const conversion = normalized.match(/(?:convert )?(\d+(?:\.\d+)?)\s*(km|kilometers?|mi|miles?|meters?|m|feet|ft|kg|kilograms?|lb|pounds?)\s+(?:to|into)\s+(km|kilometers?|mi|miles?|meters?|m|feet|ft|kg|kilograms?|lb|pounds?)/);
+  if (conversion) {
+    const value = Number(conversion[1]);
+    const from = conversion[2];
+    const to = conversion[3];
+    const units = { km: 'km', kilometers: 'km', kilometer: 'km', mi: 'mi', miles: 'mi', mile: 'mi', meters: 'm', meter: 'm', m: 'm', feet: 'ft', foot: 'ft', ft: 'ft', kg: 'kg', kilograms: 'kg', kilogram: 'kg', lb: 'lb', pounds: 'lb', pound: 'lb' };
+    const normalizedFrom = units[from];
+    const normalizedTo = units[to];
+    const factors = { km: 1000, mi: 1609.344, m: 1, ft: 0.3048, kg: 1, lb: 0.45359237 };
+    const compatible = (['km', 'mi', 'm', 'ft'].includes(normalizedFrom) && ['km', 'mi', 'm', 'ft'].includes(normalizedTo)) || (['kg', 'lb'].includes(normalizedFrom) && ['kg', 'lb'].includes(normalizedTo));
+    if (compatible) {
+      const result = value * factors[normalizedFrom] / factors[normalizedTo];
+      return `${value} ${normalizedFrom} is ${Number(result.toFixed(6))} ${normalizedTo}.`;
+    }
+  }
+
+  const comparison = normalized.match(/is (.+?) (greater than|less than|equal to) (.+)/);
+  if (comparison) {
+    const left = calculate(comparison[1].trim());
+    const right = calculate(comparison[3].trim());
+    if (left !== null && right !== null) {
+      const a = Number(left);
+      const b = Number(right);
+      const result = comparison[2] === 'greater than' ? a > b : comparison[2] === 'less than' ? a < b : a === b;
+      return `${left} is ${result ? '' : 'not '}${comparison[2]} ${right}.`;
+    }
+  }
+
   const expression = normalized
     .replace(/^(what is|calculate|compute|solve)\s+/, '')
     .replace(/\bmultiplied by\b/g, '*')
