@@ -6,7 +6,13 @@ where javac >nul 2>&1
 if errorlevel 1 (
     echo  javac not found. Install a JDK and add it to PATH, or set JAVA_HOME.
     echo  Then run build.bat again.
-    pause
+    exit /b 1
+)
+
+where jar >nul 2>&1
+if errorlevel 1 (
+    echo  jar not found. Install a full JDK and add it to PATH, or set JAVA_HOME.
+    echo  A Java runtime or compiler alone cannot package AetherMind.jar.
     exit /b 1
 )
 
