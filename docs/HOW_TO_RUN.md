@@ -18,6 +18,8 @@ chmod +x run-web.sh
 
 Then open **http://127.0.0.1:8080/web/**
 
+The web client includes optional voice input and spoken replies. Select the microphone button and allow browser microphone access. Voice input requires a secure context such as `https://` or `localhost`; speech support varies by browser. Use the speaker button to enable or disable spoken replies.
+
 What you should see: dark chat UI, “ONLINE”, boot lines, clickable hints (`hello`, `joke`, `java`, …). Type a message and press Enter.
 
 | Try | Expected |

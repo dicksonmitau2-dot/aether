@@ -11,8 +11,15 @@ let ready = false;
 
 const chatWindow = document.getElementById('chatWindow');
 const userInput  = document.getElementById('userInput');
+const micBtn     = document.getElementById('micBtn');
+const voiceBtn   = document.getElementById('voiceBtn');
 const sendBtn    = document.getElementById('sendBtn');
 const statusEl   = document.getElementById('status');
+
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = Recognition ? new Recognition() : null;
+let listening = false;
+let voiceEnabled = localStorage.getItem('aethermind.voice.v1') !== 'off';
 
 function phraseMatch(input, key) {
   const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -106,6 +113,19 @@ function appendBubble(who, text, animate = false) {
   });
 }
 
+function speak(text) {
+  if (!voiceEnabled || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  utterance.onstart = () => setStatus('speaking');
+  utterance.onend = () => {
+    if (ready && !listening) setStatus('online');
+  };
+  window.speechSynthesis.speak(utterance);
+}
+
 function handleSend() {
   if (!ready) return;
   const raw = userInput.value.trim();
@@ -121,6 +141,7 @@ function handleSend() {
     setStatus('offline');
     setTimeout(async () => {
       await appendBubble('ai', GOODBYE, true);
+      speak(GOODBYE);
     }, 400);
     return;
   }
@@ -129,7 +150,7 @@ function handleSend() {
 
   setTimeout(async () => {
     await appendBubble('ai', reply, true);
-    setStatus('online');
+    speak(reply);
     setInputEnabled(true);
     userInput.focus();
   }, 350 + Math.random() * 200);
@@ -142,13 +163,35 @@ function scrollBottom() {
 function setInputEnabled(enabled) {
   userInput.disabled  = !enabled;
   sendBtn.disabled    = !enabled;
+  if (micBtn) micBtn.disabled = !enabled || !recognition;
 }
 
 function setStatus(state) {
   statusEl.className = `status ${state}`;
   if (state === 'online')   { statusEl.textContent = '● ONLINE';     }
   if (state === 'thinking') { statusEl.textContent = '● THINKING...'; }
+  if (state === 'speaking') { statusEl.textContent = '● SPEAKING...'; }
+  if (state === 'listening') { statusEl.textContent = '● LISTENING...'; }
   if (state === 'offline')  { statusEl.textContent = '● OFFLINE';    }
+}
+
+function updateVoiceButton() {
+  voiceBtn.textContent = voiceEnabled ? '\u{1f50a}' : '\u{1f507}';
+  voiceBtn.setAttribute('aria-label', voiceEnabled ? 'Turn voice replies off' : 'Turn voice replies on');
+  voiceBtn.title = voiceEnabled ? 'Turn voice replies off' : 'Turn voice replies on';
+}
+
+function toggleListening() {
+  if (!recognition || !ready) return;
+  if (listening) {
+    recognition.stop();
+    return;
+  }
+  try {
+    recognition.start();
+  } catch (_) {
+    setStatus('online');
+  }
 }
 
 function persist() {
@@ -182,6 +225,43 @@ userInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') handleSend();
 });
 
+voiceBtn.addEventListener('click', () => {
+  voiceEnabled = !voiceEnabled;
+  localStorage.setItem('aethermind.voice.v1', voiceEnabled ? 'on' : 'off');
+  if (!voiceEnabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  updateVoiceButton();
+});
+
+micBtn.addEventListener('click', toggleListening);
+
+if (recognition) {
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = document.documentElement.lang || 'en-US';
+  recognition.onstart = () => {
+    listening = true;
+    micBtn.classList.add('active');
+    setStatus('listening');
+  };
+  recognition.onresult = event => {
+    const transcript = event.results[0][0].transcript.trim();
+    if (transcript) {
+      userInput.value = transcript;
+      handleSend();
+    }
+  };
+  recognition.onerror = () => setStatus('online');
+  recognition.onend = () => {
+    listening = false;
+    micBtn.classList.remove('active');
+    if (ready && statusEl.classList.contains('listening')) setStatus('online');
+  };
+} else {
+  micBtn.disabled = true;
+  micBtn.title = 'Voice input is not supported by this browser';
+  micBtn.setAttribute('aria-label', 'Voice input unavailable');
+}
+
 document.querySelectorAll('.boot-hint span').forEach(el => {
   el.addEventListener('click', () => {
     userInput.value = el.textContent;
@@ -196,6 +276,7 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
 }
 
 setInputEnabled(false);
+updateVoiceButton();
 loadKnowledge()
   .then((data) => {
     fallbacks = Array.isArray(data.fallbacks) ? data.fallbacks : ['Hmm. Rephrase that?'];
