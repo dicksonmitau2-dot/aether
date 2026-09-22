@@ -16,24 +16,22 @@
   <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <header>
     <div class="header-left">
-      <div class="logo">⬡</div>
+      <div class="logo" aria-hidden="true">✦</div>
       <div class="header-text">
-        <span class="app-title">AETHER MIND</span>
-        <span class="app-sub">v0.9 · Local + online knowledge</span>
+        <span class="app-title">Aether</span>
+        <span class="app-sub">Local intelligence · Online when needed</span>
       </div>
     </div>
+    <div class="model-pill">AETHER 0.9 <span>⌄</span></div>
     <div id="status" class="status online">● ONLINE</div>
   </header>
 
   <!-- ── Chat window ────────────────────────────────────────────────────── -->
   <main id="chatWindow">
     <div class="boot-msg">
-      <div class="boot-banner">⬡ AETHER MIND v0.9</div>
-      <div class="boot-sub">Local first. Online answers when needed.</div>
-      <div class="boot-line">Initializing neural pathways...</div>
-      <div class="boot-line">Loading knowledge base...</div>
-      <div class="boot-line online-text">Consciousness online.</div>
-      <div class="boot-hint">Try: <span>hello</span> · <span>joke</span> · <span>java</span> · <span>life</span> · <span>weather</span> · <span>hack</span></div>
+      <div class="boot-banner">How can I help?</div>
+      <div class="boot-sub">Ask anything. Aether thinks locally, then searches for what it does not know.</div>
+      <div class="boot-hint"><span>Explain quantum computing</span><span>Calculate 15% of 240</span><span>Tell me a joke</span></div>
     </div>
   </main>
 
@@ -43,7 +41,7 @@
       <input
         type="text"
         id="userInput"
-        placeholder="Talk to Aether..."
+        placeholder="Ask Aether anything..."
         autocomplete="off"
         autocorrect="off"
         autocapitalize="off"
@@ -53,6 +51,7 @@
       <button id="voiceBtn" type="button" aria-label="Turn voice replies off" title="Turn voice replies off">&#128266;</button>
       <button id="sendBtn" onclick="handleSend()">&#9658;</button>
     </div>
+    <div class="composer-note"><span>✦ Aether can make mistakes.</span><span>Responses may use online sources.</span></div>
   </footer>
 
   <script src="aether.js"></script>
